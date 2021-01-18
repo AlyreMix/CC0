@@ -1,5 +1,3 @@
-import java.io.*;
-import java.net.*;
 class Parser {
     Tokenizer t;
     Token current;
@@ -48,7 +46,6 @@ class Parser {
 
     void error(int n) {
     throw new RuntimeException();
-//        System.exit(1);
     }
 
     Token must(String type) {
