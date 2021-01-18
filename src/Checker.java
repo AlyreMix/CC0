@@ -1,15 +1,14 @@
 import java.util.*;
-import java.io.*;
+
 class Checker {
-    void error(int c, AST n) {
+    void error(int a, AST n) {
         System.out.print(n);
-//        throw new RuntimeException("" + (300 + c));
         System.exit(1);
     }
     
     void addVariable(Env env, AST n) {
         Env.Variable v = null;
-        if (n.is("decl_stmt")) {
+        if (n.is("decl_stmt") == true) {
            String vname = n.get(1).token.lexeme;
            String vtype = n.get(2).token.lexeme;
            boolean visConst = n.get(0).token.is(Token.TYPE_CONST_KW);
@@ -19,10 +18,10 @@ class Checker {
                isConst = visConst;
                node = n;
            }};
-        } else if (n.is("function")) {
+        } else if (n.is("function") == true) {
            String vname = n.get(0).token.lexeme;
            String vtype = n.get(2).token.lexeme;
-           if (vname.equals("main")) {
+           if (vname.equals("main") == true) {
                mainFound = true;
            }
            boolean visConst = false;
@@ -34,7 +33,7 @@ class Checker {
                data = "";
            }};
            currentFunction = v;
-        } else if (n.is("function_param")) {
+        } else if (n.is("function_param") == true) {
            v = new Env.Variable() {{
                name = n.get(1).token.lexeme;
                type = n.get(2).token.lexeme;
@@ -44,10 +43,12 @@ class Checker {
            currentFunction.data = currentFunction.getData(String.class) +
             ";" + v.type;
         }
+        
         if (v == null) {
             error(1, n);
         }
-        if (!env.addVariable(v)) {
+        
+        if (env.addVariable(v) == false) {
             System.out.println(v);
             error(2, n);
         }
@@ -57,7 +58,8 @@ class Checker {
     String tryCall(String name, Env env, List<String> calltypes, AST n) {
         String s = calltypes.stream().reduce("", (a, b) -> a + ";" + b);
         switch (name) {
-            case "getint": {
+            case "getint":
+            case "getchar": {
                 type_equal(s, "", n);
                 return "int";
             }
@@ -65,24 +67,14 @@ class Checker {
                 type_equal(s, "", n);
                 return "double";
             }
-            case "getchar": {
-                type_equal(s, "", n);
-                return "int";
-            }
-            case "putint": {
+            case "putint":
+            case "putstr":
+            case "putchar": {
                 type_equal(s, ";int", n);
                 return "void";
             }
             case "putdouble": {
                 type_equal(s, ";double", n);
-                return "void";
-            }
-            case "putchar": {
-                type_equal(s, ";int", n);
-                return "void";
-            }
-            case "putstr": {
-                type_equal(s, ";int", n);
                 return "void";
             }
             case "putln": {
@@ -98,7 +90,6 @@ class Checker {
             error(13, n);
         }
         return fn.type;
-            
     }
 
 
@@ -273,10 +264,11 @@ class Checker {
             }
             case "literal_expr": {
                 switch (a.get(0).token.type) {
-                    case Token.TYPE_LITI: return (a.type = "int");
-                    case Token.TYPE_LITS: return (a.type = "int");
+                    case Token.TYPE_LITI:
+                    case Token.TYPE_LITS:
+                    case Token.TYPE_LITC:
+                        return (a.type = "int");
                     case Token.TYPE_LITF: return (a.type = "double");
-                    case Token.TYPE_LITC: return (a.type = "int");
                     default:
                         error(8, a);
                         return "";
@@ -300,7 +292,7 @@ class Checker {
                 return ty;
             }
             case "return_stmt": {
-                String ret = "";
+                String ret;
                 if (a.size() > 0) {
                     ret = "return " + check(a.get(0), env);
                 } else {
